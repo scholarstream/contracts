@@ -9,17 +9,10 @@ pragma experimental ABIEncoderV2;
 // Combining BoringBatchable with msg.value can cause double spending issues
 // https://www.paradigm.xyz/2021/08/two-rights-might-make-a-wrong/
 
-interface IERC20Permit{
-     /// @notice EIP 2612
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
+interface IERC20Permit {
+    /// @notice EIP 2612
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external;
 }
 
 contract BaseBoringBatchable {

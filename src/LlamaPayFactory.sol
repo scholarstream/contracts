@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {LlamaPay} from "./LlamaPay.sol";
 
-
 contract LlamaPayFactory {
     bytes32 constant INIT_CODEHASH = keccak256(type(LlamaPay).creationCode);
 
@@ -14,12 +13,12 @@ contract LlamaPayFactory {
     event LlamaPayCreated(address token, address llamaPay);
 
     /**
-        @notice Create a new Llama Pay Streaming instance for `_token`
-        @dev Instances are created deterministically via CREATE2 and duplicate
-            instances will cause a revert
-        @param _token The ERC20 token address for which a Llama Pay contract should be deployed
-        @return llamaPayContract The address of the newly created Llama Pay contract
-      */
+     * @notice Create a new Llama Pay Streaming instance for `_token`
+     *     @dev Instances are created deterministically via CREATE2 and duplicate
+     *         instances will cause a revert
+     *     @param _token The ERC20 token address for which a Llama Pay contract should be deployed
+     *     @return llamaPayContract The address of the newly created Llama Pay contract
+     */
     function createLlamaPayContract(address _token) external returns (address llamaPayContract) {
         // set the parameter storage slot so the contract can query it
         parameter = _token;
@@ -32,7 +31,7 @@ contract LlamaPayFactory {
         // Append the new contract address to the array of deployed contracts
         uint256 index = getLlamaPayContractCount;
         getLlamaPayContractByIndex[index] = llamaPayContract;
-        unchecked{
+        unchecked {
             getLlamaPayContractCount = index + 1;
         }
 
@@ -40,18 +39,25 @@ contract LlamaPayFactory {
     }
 
     /**
-      @notice Query the address of the Llama Pay contract for `_token` and whether it is deployed
-      @param _token An ERC20 token address
-      @return predictedAddress The deterministic address where the llama pay contract will be deployed for `_token`
-      @return isDeployed Boolean denoting whether the contract is currently deployed
-      */
-    function getLlamaPayContractByToken(address _token) external view returns(address predictedAddress, bool isDeployed){
-        predictedAddress = address(uint160(uint256(keccak256(abi.encodePacked(
-            bytes1(0xff),
-            address(this),
-            bytes32(uint256(uint160(_token))),
-            INIT_CODEHASH
-        )))));
+     * @notice Query the address of the Llama Pay contract for `_token` and whether it is deployed
+     *   @param _token An ERC20 token address
+     *   @return predictedAddress The deterministic address where the llama pay contract will be deployed for `_token`
+     *   @return isDeployed Boolean denoting whether the contract is currently deployed
+     */
+    function getLlamaPayContractByToken(address _token)
+        external
+        view
+        returns (address predictedAddress, bool isDeployed)
+    {
+        predictedAddress = address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(bytes1(0xff), address(this), bytes32(uint256(uint160(_token))), INIT_CODEHASH)
+                    )
+                )
+            )
+        );
         isDeployed = predictedAddress.code.length != 0;
     }
 }

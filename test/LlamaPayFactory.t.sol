@@ -8,8 +8,9 @@ import {MockToken} from "../src/mock/MockToken.sol";
 
 contract FactoryTest is Test {
     function setUp() public {
-        vm.createSelectFork(vm.rpcUrl('arbitrum'));
+        vm.createSelectFork(vm.rpcUrl("arbitrum"));
     }
+
     function helper_deployAll(uint8 _tokenDecimals) internal returns (LlamaPayFactory, MockToken, LlamaPay) {
         MockToken mockToken = new MockToken(_tokenDecimals);
 
@@ -42,7 +43,7 @@ contract FactoryTest is Test {
             // check if the contract is deployed
             (, bool isDeployed) = factory.getLlamaPayContractByToken(tokens[i]);
             assertEq(isDeployed, false);
-            
+
             // create a new LlamaPay contract for each token
             factory.createLlamaPayContract(tokens[i]);
         }
