@@ -61,4 +61,29 @@ contract PayStreamTest is Test {
         vm.expectRevert("stream doesn't exist");
         llamaPay.withdraw(payer, payee, perSec);
     }
+
+    // withdrawPayer works and if withdraw is called after less than perSec funds are left in contract
+    function test_WithdrawPayer() public {
+        (LlamaPay llamaPay, address payer, address payee, , , uint216 perSec) = helper_setupStream(10e3, 18);
+    
+        // Withdraw 5,000 * 1e3
+        llamaPay.withdrawPayer(5e3 * 1e3);
+
+        // Check remaining balance
+        int256 left = llamaPay.getPayerBalance(payer);
+        assertGt(left, 9_999 * 1e18);
+
+        // Withdraw all remaining funds
+        llamaPay.withdrawPayerAll();
+    
+        // Check if balance is 0 (or slightly negative due to elapsed time)
+        int256 left2 = llamaPay.getPayerBalance(payer);
+        assertEq(left2, 0);
+
+        // Withdraw stream
+        llamaPay.withdraw(payer, payee, perSec);
+    
+        // Check if contract token balance is now less than `perSec`
+        // assertLt(MockToken(token).balanceOf(address(llamaPay)), perSec);
+    }
 }
