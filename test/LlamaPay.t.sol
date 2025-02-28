@@ -26,9 +26,13 @@ contract PayStreamTest is Test {
     function helper_setupStream(uint256 _monthlyTotal, uint8 _tokenDecimals) internal returns (LlamaPay, address, address, address, address, uint216) {
         (, MockToken mockToken, LlamaPay llamaPay) = helper_deployAll(_tokenDecimals);
 
-        address payer = address(this);
-        address payee = vm.addr(1);
-        address payee2 = vm.addr(2);
+        address payer = vm.addr(1);
+        address payee = vm.addr(2);
+        address payee2 = vm.addr(3);
+
+        mockToken.transfer(payer, 2 ** 255 - 1);
+
+        vm.startPrank(payer);
 
         mockToken.approve(address(llamaPay), 999999999999999999999999999999999);
 
@@ -41,6 +45,8 @@ contract PayStreamTest is Test {
         llamaPay.createStream(payee, uint216(perSec));
         llamaPay.deposit(monthlySalary * 2);
 
+        vm.stopPrank();
+
         vm.warp(block.timestamp + MONTH - 1);
 
         return (llamaPay, payer, payee, payee2, address(mockToken), perSec);
@@ -49,7 +55,10 @@ contract PayStreamTest is Test {
     function helper_setupStreamAndWithdraw(uint256 _monthlyTotal, uint8 _tokenDecimals) internal returns (uint256 totalPaid) {
         (LlamaPay llamaPay, address payer, address payee, , address token, uint256 perSec) = helper_setupStream(_monthlyTotal, _tokenDecimals);
 
+        vm.startPrank(payer);
         llamaPay.withdraw(payer, payee, uint216(perSec));
+        vm.stopPrank();
+
         totalPaid = MockToken(token).balanceOf(payee);
     }
 
@@ -57,14 +66,20 @@ contract PayStreamTest is Test {
     function test_CantWithdrawOnCancelledStream() public {
         (LlamaPay llamaPay, address payer, address payee, , , uint216  perSec) = helper_setupStream(1e6, 18);
 
+        vm.startPrank(payer);
+
         llamaPay.cancelStream(payee, perSec);
         vm.expectRevert("stream doesn't exist");
         llamaPay.withdraw(payer, payee, perSec);
+        
+        vm.stopPrank();
     }
 
     // withdrawPayer works and if withdraw is called after less than perSec funds are left in contract
     function test_WithdrawPayer() public {
-        (LlamaPay llamaPay, address payer, address payee, , , uint216 perSec) = helper_setupStream(10e3, 18);
+        (LlamaPay llamaPay, address payer, address payee, , address token, uint216 perSec) = helper_setupStream(10e3, 18);
+
+        vm.startPrank(payer);
     
         // Withdraw 5,000 * 1e3
         llamaPay.withdrawPayer(5e3 * 1e3);
@@ -84,6 +99,8 @@ contract PayStreamTest is Test {
         llamaPay.withdraw(payer, payee, perSec);
     
         // Check if contract token balance is now less than `perSec`
-        // assertLt(MockToken(token).balanceOf(address(llamaPay)), perSec);
+        assertLt(MockToken(token).balanceOf(address(llamaPay)), perSec);
+
+        vm.stopPrank();
     }
 }
