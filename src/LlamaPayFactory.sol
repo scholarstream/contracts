@@ -22,5 +22,9 @@ contract LlamaPayFactory {
 
         emit LlamaPayCreated(_token, _adapter, _vault, address(newContract));
     }
+
+    function getPayContract(address _token, address _adapter, address _vault) external view returns (LlamaPay) {
+        return payContracts[_token][_adapter][_vault];
+    }
 }
 
