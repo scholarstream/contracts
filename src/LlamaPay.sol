@@ -36,8 +36,9 @@ contract LlamaPay {
 
     function updateBalances(address payer) private {
         uint256 delta = block.timestamp - lastPayerUpdate[payer];
-    
         uint256 totalPaid = delta * totalPaidPerSec[payer];
+    
+        // Deduct the total paid from the balance and update the last update time.
         balances[payer] -= totalPaid;
         lastPayerUpdate[payer] = block.timestamp;
     
@@ -48,24 +49,22 @@ contract LlamaPay {
             lastPrice = currentPrice;
         }
     
-        if (currentPrice >= lastPrice) {
-            // Adjust balance based on price change
-            balances[payer] = balances[payer] * currentPrice / lastPrice;
-    
-            // Calculate profits on new paid tokens
+        // When there's no yield (currentPrice equals lastPrice)
+        if (currentPrice == lastPrice) {
+            // Simply credit the principal streamed out to paidBalance.
+            paidBalance[payer] += totalPaid;
+        } else if (currentPrice > lastPrice) {
+            // Calculate profits and yield when there is yield.
+            uint256 adjustedBalance = balances[payer] * currentPrice / lastPrice;
             uint256 profitsFromPaid = (totalPaid * currentPrice / lastPrice - totalPaid) / 2;
-            balances[payer] += profitsFromPaid;
-    
-            // Calculate yield on the coins already paid
+            adjustedBalance += profitsFromPaid;
+            // If there's already some paidBalance, calculate yield on it.
             uint256 yieldOnOldCoins = paidBalance[payer] * currentPrice / lastPrice - paidBalance[payer];
-    
-            // Only update yieldEarnedPerToken if paidBalance is non-zero
             if (paidBalance[payer] > 0) {
                 yieldEarnedPerToken[payer] += (profitsFromPaid + yieldOnOldCoins) / paidBalance[payer];
             }
-            
-            // Update paidBalance with the newly computed values and totalPaid
-            paidBalance[payer] += yieldOnOldCoins + profitsFromPaid + totalPaid;
+            paidBalance[payer] += totalPaid + profitsFromPaid + yieldOnOldCoins;
+            balances[payer] = adjustedBalance;
             lastPricePerShare[payer] = currentPrice;
         }
     }
@@ -105,31 +104,21 @@ contract LlamaPay {
     function withdraw(address from, address to, uint256 amountPerSec) public {
         bytes32 streamId = getStreamId(from, to, amountPerSec);
         require(streamToStart[streamId] != 0, "stream doesn't exist");
-
-        uint256 payerDelta = block.timestamp - lastPayerUpdate[from];
-        uint256 totalPayerPayment = payerDelta * totalPaidPerSec[from];
-        uint256 payerBalance = balances[from];
-
-        if (payerBalance >= totalPayerPayment) {
-            balances[from] -= totalPayerPayment;
-            lastPayerUpdate[from] = block.timestamp;
-        } else {
-            // invariant: totalPaidPerSec[from] != 0
-            unchecked {
-                uint256 timePaid = payerBalance / totalPaidPerSec[from];
-                lastPayerUpdate[from] += timePaid;
-
-                // invariant: lastPayerUpdate[from] < block.timestamp
-                balances[from] = payerBalance % totalPaidPerSec[from];
-            }
-        }
-
+    
+        // Update balances so that paidBalance reflects both principal and yield.
+        updateBalances(from);
+    
         uint256 lastUpdate = lastPayerUpdate[from];
         uint256 delta = lastUpdate - streamToStart[streamId];
         streamToStart[streamId] = lastUpdate;
-        paidBalance[from] -= delta * amountPerSec;
-
-        token.transfer(to, delta * amountPerSec);
+    
+        uint256 paymentDue = delta * amountPerSec;
+        require(paidBalance[from] >= paymentDue, "Insufficient funds");
+        paidBalance[from] -= paymentDue;
+    
+        // Withdraw tokens from the vault (using adapter, etc.) and then transfer them.
+        Adapter(adapter).withdraw(vault, paymentDue);
+        token.transfer(to, paymentDue);
     }
 
     function modify(address oldTo, uint256 oldAmountPerSec, address to, uint256 amountPerSec) public {
