@@ -21,5 +21,10 @@ contract FactoryTest is Test {
 
         // assert that the payContractsArrayLength was incremented
         assertEq(factory.payContractsArrayLength(), 1);
+
+        // assert that payContract has correct token, adapter, and vault
+        assertEq(address(payContract.token()), token);
+        assertEq(address(payContract.adapter()), adapter);
+        assertEq(address(payContract.vault()), vault);
     }
 }
