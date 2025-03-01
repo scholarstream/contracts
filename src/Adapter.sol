@@ -31,4 +31,3 @@ contract BeefyAdapter is Adapter {
         return BeefyVault(vault).pricePerShare();
     }
 }
-
