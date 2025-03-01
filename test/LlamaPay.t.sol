@@ -7,8 +7,31 @@ import {LlamaPayFactory} from "../src/LlamaPayFactory.sol";
 import {MockToken} from "../src/mock/MockToken.sol";
 
 contract PayStreamTest is Test {
+
+    uint256 MONTH = 24 * 3600 * 30;
+
     function setUp() public {
         vm.createSelectFork(vm.rpcUrl("arbitrum"));
+    }
+
+    function helper_basicSetup() internal returns (LlamaPay, address, address, address, address, uint256) {
+        (, MockToken mockToken, LlamaPay llamaPay) = helper_deployAll(18); 
+
+        address payer = vm.addr(1);
+        address payee = vm.addr(2);
+        address payee2 = vm.addr(3);
+
+        mockToken.transfer(payer, 2 ** 255 - 1);
+
+        vm.startPrank(payer);
+
+        mockToken.approve(address(llamaPay), 999999999999999999999999999999999);
+
+        uint256 DECIMALS_DIVISOR = llamaPay.DECIMALS_DIVISOR();
+
+        vm.stopPrank();
+
+        return (llamaPay, payer, payee, payee2, address(mockToken), DECIMALS_DIVISOR);
     }
 
     function helper_deployAll(uint8 _tokenDecimals) internal returns (LlamaPayFactory, MockToken, LlamaPay) {
@@ -36,7 +59,6 @@ contract PayStreamTest is Test {
 
         mockToken.approve(address(llamaPay), 999999999999999999999999999999999);
 
-        uint256 MONTH = 24 * 3600 * 30;
         uint256 DECIMALS_DIVISOR = llamaPay.DECIMALS_DIVISOR();
 
         uint256 monthlySalary = 10 ** _tokenDecimals * _monthlyTotal;
@@ -100,6 +122,75 @@ contract PayStreamTest is Test {
     
         // Check if contract token balance is now less than `perSec`
         assertLt(MockToken(token).balanceOf(address(llamaPay)), perSec);
+
+        vm.stopPrank();
+    }
+
+    function test_ModifyStream() public {
+        (LlamaPay llamaPay, address payer, address payee, address payee2, , uint216 perSec) = helper_setupStream(1e6, 18);
+
+        vm.startPrank(payer);
+
+        bytes32 streamId = llamaPay.getStreamId(payer, payee, perSec);
+        uint256 statusBefore = llamaPay.streamToStart(streamId);
+        assertNotEq(statusBefore, 0);
+
+        llamaPay.modifyStream(payee, perSec, payee2, 20);
+        uint256 statusAfter = llamaPay.streamToStart(streamId);
+        assertEq(statusAfter, 0);
+
+        vm.stopPrank();
+    }
+
+    function sameNum(uint256 n1, uint256 n2, uint8 precision) internal pure {
+        uint256 factor = 10 ** precision;
+        assertEq(n1 / (1e18 / factor), n2 * factor);
+    }
+
+    function assertBalanceOf(address token, address account, uint256 amount) internal view {
+        sameNum(MockToken(token).balanceOf(account), amount, 2);
+    }
+
+    // standard flow with multiple payees and payers
+    function test_StandardFlow() public {
+        (
+            LlamaPay llamaPay,
+            address payer,
+            address payee,
+            address payee2,
+            address token,
+            uint256 DECIMALS_DIVISOR
+        ) = helper_basicSetup();
+
+        uint256 total = 10_000 ether;
+
+        vm.startPrank(payer);
+
+        MockToken(token).transfer(address(llamaPay), total * 10); 
+
+        uint256 monthly1k = total * DECIMALS_DIVISOR / 10 / MONTH;
+        llamaPay.depositAndCreate(total, payee, uint216(monthly1k * 5));
+
+        vm.warp(block.timestamp + MONTH / 2);
+
+        llamaPay.createStream(payee2, uint216(monthly1k * 10));
+
+        vm.stopPrank();
+
+        vm.prank(payee2);
+        llamaPay.withdraw(payer, payee, uint216(monthly1k * 5));
+
+        console.log('balance of payee', MockToken(token).balanceOf(payee));
+
+        vm.warp(block.timestamp + MONTH);
+
+        vm.startPrank(payer);
+
+        llamaPay.withdraw(payer, payee, uint216(monthly1k * 5));
+        console.log('balance of payee', MockToken(token).balanceOf(payee));
+
+        llamaPay.withdraw(payer, payee2, uint216(monthly1k * 10));
+        console.log('balance of payee2', MockToken(token).balanceOf(payee2));
 
         vm.stopPrank();
     }
