@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Adapter.sol";
+import {console} from "forge-std/Test.sol";
 
 contract LlamaPay {
     mapping(bytes32 => uint256) public streamToStart;
@@ -34,40 +35,43 @@ contract LlamaPay {
     }
 
     function updateBalances(address payer) private {
-        uint256 delta; // delta seconds
-        unchecked {
-            delta = block.timestamp - lastPayerUpdate[payer];
-        }
-
+        uint256 delta = block.timestamp - lastPayerUpdate[payer];
+    
         uint256 totalPaid = delta * totalPaidPerSec[payer];
         balances[payer] -= totalPaid;
         lastPayerUpdate[payer] = block.timestamp;
-
+    
         uint256 lastPrice = lastPricePerShare[payer];
         uint256 currentPrice = getPricePerShare();
-
+    
         if (lastPrice == 0) {
             lastPrice = currentPrice;
         }
-
+    
         if (currentPrice >= lastPrice) {
-            // no need to worry about currentPrice == 0 because that means that all money is gone
+            // Adjust balance based on price change
             balances[payer] = balances[payer] * currentPrice / lastPrice;
-
-            // assumes profits are strictly increasing
+    
+            // Calculate profits on new paid tokens
             uint256 profitsFromPaid = (totalPaid * currentPrice / lastPrice - totalPaid) / 2;
             balances[payer] += profitsFromPaid;
-
-            // calculate yield stuff
+    
+            // Calculate yield on the coins already paid
             uint256 yieldOnOldCoins = paidBalance[payer] * currentPrice / lastPrice - paidBalance[payer];
-            yieldEarnedPerToken[payer] += (profitsFromPaid + yieldOnOldCoins) / paidBalance[payer];
+    
+            // Only update yieldEarnedPerToken if paidBalance is non-zero
+            if (paidBalance[payer] > 0) {
+                yieldEarnedPerToken[payer] += (profitsFromPaid + yieldOnOldCoins) / paidBalance[payer];
+            }
+            
+            // Update paidBalance with the newly computed values and totalPaid
             paidBalance[payer] += yieldOnOldCoins + profitsFromPaid + totalPaid;
             lastPricePerShare[payer] = currentPrice;
         }
     }
 
     function createStream(address to, uint256 amountPerSec) public {
-        bytes32 steramId = getStreamId(msg.sender, to, amountPerSec);
+        bytes32 streamId = getStreamId(msg.sender, to, amountPerSec);
 
         // this checks that even if:
         // - token has 18 decimals
@@ -81,9 +85,9 @@ contract LlamaPay {
         }
 
         require(amountPerSec > 0, "amountPerSec must be positive"); 
-        require(streamToStart[steramId] == 0, "stream already exists");
+        require(streamToStart[streamId] == 0, "stream already exists");
 
-        streamToStart[steramId] = block.timestamp;
+        streamToStart[streamId] = block.timestamp;
         updateBalances(msg.sender); // can't create a new stream unless there's no debt
         totalPaidPerSec[msg.sender] += amountPerSec;
     }
