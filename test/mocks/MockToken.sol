@@ -6,12 +6,19 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MockToken is ERC20 {
     uint8 decimals_;
 
-    constructor(uint8 decimals__) ERC20("a", "b") {
+    constructor(
+        string memory symbol, 
+        uint8 decimals__
+    ) ERC20("Mock Token", symbol) {
         decimals_ = decimals__;
-        _mint(msg.sender, 2 ** 255 - 1);
     }
 
+    // decimals returns the number of decimals.
     function decimals() public view override returns (uint8) {
         return decimals_;
+    }
+
+    function mint(address account, uint256 amount) public {
+        _mint(account, amount);
     }
 }
