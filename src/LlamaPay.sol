@@ -6,12 +6,25 @@ import "./Adapter.sol";
 import {console} from "forge-std/Test.sol";
 
 contract LlamaPay {
+    // streamId => start time
     mapping(bytes32 => uint256) public streamToStart;
+
+    // payer => total paid per second
     mapping(address => uint256) public totalPaidPerSec;
+
+    // payer => last update time
     mapping(address => uint256) public lastPayerUpdate;
+
+    // payer => balance
     mapping(address => uint256) public balances;
+
+    // payer => yield earned per token
     mapping(address => uint256) public yieldEarnedPerToken;
+
+    // payer => paid balance
     mapping(address => uint256) public paidBalance;
+
+    // payer => last price per share
     mapping(address => uint256) public lastPricePerShare;
 
     IERC20 immutable public token;
