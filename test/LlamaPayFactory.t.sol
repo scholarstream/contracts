@@ -9,12 +9,10 @@ contract FactoryTest is Test {
     function test_createPayContract() public {
         LlamaPayFactory factory = new LlamaPayFactory();
         address token = vm.addr(1);
-        address adapter = vm.addr(2);
-        address vault = vm.addr(3);
-        LlamaPay payContract = factory.createPayContract(token, adapter, vault);
+        LlamaPay payContract = factory.createPayContract(token);
 
         // assert that the payContract was created
-        assertEq(address(payContract), address(factory.getPayContract(token, adapter, vault)));
+        assertEq(address(payContract), address(factory.getPayContract(token)));
 
         // assert that the payContract was added to the array
         assertEq(address(payContract), address(factory.payContractsArray(0)));
@@ -24,7 +22,7 @@ contract FactoryTest is Test {
 
         // assert that payContract has correct token, adapter, and vault
         assertEq(address(payContract.token()), token);
-        assertEq(address(payContract.adapter()), adapter);
-        assertEq(address(payContract.vault()), vault);
+        // assertEq(address(payContract.adapter()), adapter);
+        // assertEq(address(payContract.vault()), vault);
     }
 }

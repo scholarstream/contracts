@@ -26,13 +26,7 @@ contract PayerTest is Test {
     function test_PayerCreateStream() public {
         LlamaPayFactory factory = new LlamaPayFactory();
         MockToken token = new MockToken("USDC", 6);
-        MockVault vault = new MockVault(token);
-        MockAdapter adapter = new MockAdapter();
-        LlamaPay payContract = factory.createPayContract(
-            address(token), 
-            address(adapter), 
-            address(vault)
-        );
+        LlamaPay payContract = factory.createPayContract(address(token));
 
         address payer = vm.addr(1);
         address payee = vm.addr(2);
@@ -40,13 +34,20 @@ contract PayerTest is Test {
 
         vm.startPrank(payer);
         token.approve(address(payContract), 10_000 * 1e6);
+
+        console.log("==============================");
+        console.log("Before Deposit");
+        console.log("Payer balance", token.balanceOf(payer));
+        console.log("PayContract balance", token.balanceOf(address(payContract)));
+        console.log("Payee balance", token.balanceOf(payee));
+
         payContract.deposit(10_000 * 1e6);
 
+        console.log("==============================");
         console.log("After Deposit");
         console.log("Payer balance", token.balanceOf(payer));
-        console.log("Vault balance", token.balanceOf(address(vault)));
-        console.log("Vault pricePerShare", adapter.pricePerShare(address(vault)));
-        console.log("block.timestamp", block.timestamp);
+        console.log("PayContract balance", token.balanceOf(address(payContract)));
+        console.log("Payee balance", token.balanceOf(payee));
 
         uint256 amountPerSec = 2;
         payContract.createStream(payee, amountPerSec);
@@ -71,16 +72,43 @@ contract PayerTest is Test {
 
         vm.stopPrank();
         vm.startPrank(payee);
-        payContract.withdraw(payer, payee, amountPerSec);
-        console.log("After Withdraw");
+
+        console.log("==============================");
+        console.log("Before Withdraw");
         console.log("Payer balance", token.balanceOf(payer));
+        console.log("PayContract balance", token.balanceOf(address(payContract)));
         console.log("Payee balance", token.balanceOf(payee));
-        console.log("Vault balance", token.balanceOf(address(vault)));
 
-        // payContract.withdrawPayer(10_000 * 1e6);
+        payContract.withdraw(payer, payee, amountPerSec);
 
-        // console.log("After Withdraw Payer");
-        // console.log("Payer balance", token.balanceOf(payer));
-        // console.log("Vault balance", token.balanceOf(address(vault)));
+        console.log("==============================");
+        console.log("After Withdraw (1)");
+        console.log("Payer balance", token.balanceOf(payer));
+        console.log("PayContract balance", token.balanceOf(address(payContract)));
+        console.log("Payee balance", token.balanceOf(payee));
+        console.log("PayContract balance[payer]", payContract.balances(payer));
+
+        vm.warp(block.timestamp + 1 days);
+
+        payContract.withdraw(payer, payee, amountPerSec);
+
+        console.log("==============================");
+        console.log("After Withdraw (2)");
+        console.log("Payer balance", token.balanceOf(payer));
+        console.log("PayContract balance", token.balanceOf(address(payContract)));
+        console.log("Payee balance", token.balanceOf(payee));
+        console.log("PayContract balance[payer]", payContract.balances(payer));
+
+        vm.stopPrank();
+
+        vm.startPrank(payer);
+        payContract.withdrawPayer(payContract.balances(payer));
+
+        console.log("==============================");
+        console.log("After Withdraw Payer");
+        console.log("Payer balance", token.balanceOf(payer));
+        console.log("PayContract balance", token.balanceOf(address(payContract)));
+        console.log("Payee balance", token.balanceOf(payee));
+        vm.stopPrank();
     }
 }
