@@ -37,18 +37,18 @@ contract LlamaPay {
     function updateBalances(address payer) private {
         uint256 delta = block.timestamp - lastPayerUpdate[payer];
         uint256 totalPaid = delta * totalPaidPerSec[payer];
-    
+
         // Deduct the total paid from the balance and update the last update time.
         balances[payer] -= totalPaid;
         lastPayerUpdate[payer] = block.timestamp;
-    
+
         uint256 lastPrice = lastPricePerShare[payer];
         uint256 currentPrice = getPricePerShare();
-    
+
         if (lastPrice == 0) {
             lastPrice = currentPrice;
         }
-    
+
         // When there's no yield (currentPrice equals lastPrice)
         if (currentPrice == lastPrice) {
             // Simply credit the principal streamed out to paidBalance.
@@ -82,7 +82,6 @@ contract LlamaPay {
         unchecked {
             require(amountPerSec < type(uint256).max / (10e9 * 1e3 * 365 days * 1e9), "no overflow");
         }
-
         require(amountPerSec > 0, "amountPerSec must be positive"); 
         require(streamToStart[streamId] == 0, "stream already exists");
 
