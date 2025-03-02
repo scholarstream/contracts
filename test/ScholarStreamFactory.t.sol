@@ -2,14 +2,14 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {LlamaPay} from "../src/LlamaPay.sol";
-import {LlamaPayFactory} from "../src/LlamaPayFactory.sol";
+import {ScholarStream} from "../src/ScholarStream.sol";
+import {ScholarStreamFactory} from "../src/ScholarStreamFactory.sol";
 
 contract FactoryTest is Test {
     function test_createPayContract() public {
-        LlamaPayFactory factory = new LlamaPayFactory();
+        ScholarStreamFactory factory = new ScholarStreamFactory();
         address token = vm.addr(1);
-        LlamaPay payContract = factory.createPayContract(token);
+        ScholarStream payContract = factory.createPayContract(token);
 
         // assert that the payContract was created
         assertEq(address(payContract), address(factory.getPayContract(token)));

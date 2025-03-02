@@ -2,20 +2,20 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {LlamaPay} from "../src/LlamaPay.sol";
-import {LlamaPayFactory} from "../src/LlamaPayFactory.sol";
+import {ScholarStream} from "../src/ScholarStream.sol";
+import {ScholarStreamFactory} from "../src/ScholarStreamFactory.sol";
 import {MockToken} from "./mocks/MockToken.sol";
 
-contract PayerTest is Test {
-    LlamaPayFactory factory;
+contract StreamTest is Test {
+    ScholarStreamFactory factory;
     MockToken token;
-    LlamaPay payContract;
+    ScholarStream payContract;
     address payer;
     address payee;
 
     /// @notice Deploy the contracts and prepare test addresses.
     function setUp() public {
-        factory = new LlamaPayFactory();
+        factory = new ScholarStreamFactory();
         token = new MockToken("USDC", 6);
         payContract = factory.createPayContract(address(token));
         payer = vm.addr(1);
