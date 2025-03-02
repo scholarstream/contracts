@@ -119,7 +119,7 @@ contract ScholarStreamYieldTest is Test {
     function testWithdrawPayer() public {
         uint256 initialBalance = token.balanceOf(payer);
         uint256 depositAmount = 2_000 * 1e6;
-        uint256 percentToVault = 0;
+        uint256 percentToVault = 70;
         uint256 rate = 5 * 1e6; // 5 tokens/sec
 
         vm.startPrank(payer);

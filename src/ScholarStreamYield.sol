@@ -86,11 +86,6 @@ contract ScholarStreamYield is ReentrancyGuard {
     function updatePayerBalances(address payer) public {
         uint256 delta = block.timestamp - lastPayerUpdate[payer];
         uint256 totalNeedToPay = delta * totalPaidPerSec[payer];
-        console.log("==================");
-        console.log("delta: %d", delta);
-        console.log("totalPaidPerSec: %d", totalPaidPerSec[payer]);
-        console.log("effectiveBalance: %d", effectiveBalance(payer));
-        console.log("totalNeedToPay: %d", totalNeedToPay);
         require(effectiveBalance(payer) >= totalNeedToPay, "Insufficient funds for stream");
         paidBalance[payer] += totalNeedToPay;
         lastPayerUpdate[payer] = block.timestamp;
