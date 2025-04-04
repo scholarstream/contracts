@@ -15,7 +15,7 @@ contract ScholarStreamYieldTest is Test {
 
   function setUp() public {
     // Deploy a mock token (e.g. USDC with 6 decimals)
-    token = new MockToken("USDC", 6);
+    token = new MockToken("USDC Mock", "USDC", 6);
     // Deploy a mock yield vault (which supports simulateYield)
     vault = new MockYieldVault(address(token));
     // Deploy the ScholarStreamYield contract with token and vault addresses
@@ -23,8 +23,11 @@ contract ScholarStreamYieldTest is Test {
     // Set test addresses
     payer = vm.addr(1);
     payee = vm.addr(2);
+
     // Mint tokens to payer
-    token.mint(payer, 10_000 * 1e6);
+    vm.prank(payer);
+    token.mint(10_000 * 1e6);
+
     // Payer approves ScholarStreamYield to spend tokens
     vm.startPrank(payer);
     token.approve(address(scholar), 10_000 * 1e6);

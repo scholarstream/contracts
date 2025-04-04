@@ -16,11 +16,13 @@ contract StreamTest is Test {
   /// @notice Deploy the contracts and prepare test addresses.
   function setUp() public {
     factory = new ScholarStreamFactory();
-    token = new MockToken("USDC", 6);
+    token = new MockToken("USDC Mock", "USDC", 6);
     payContract = factory.createPayContract(address(token));
     payer = vm.addr(1);
     payee = vm.addr(2);
-    token.mint(payer, 10_000 * 1e6);
+
+    vm.prank(payer);
+    token.mint(10_000 * 1e6);
   }
 
   /// @notice Executes the full flow: deposit, create a stream, simulate time passage with withdrawals,

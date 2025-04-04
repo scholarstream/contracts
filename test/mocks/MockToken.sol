@@ -7,9 +7,10 @@ contract MockToken is ERC20 {
   uint8 decimals_;
 
   constructor(
-    string memory symbol,
+    string memory name__,
+    string memory symbol__,
     uint8 decimals__
-  ) ERC20("Mock Token", symbol) {
+  ) ERC20(name__, symbol__) {
     decimals_ = decimals__;
   }
 
@@ -18,7 +19,7 @@ contract MockToken is ERC20 {
     return decimals_;
   }
 
-  function mint(address account, uint256 amount) public {
-    _mint(account, amount);
+  function mint(uint256 amount) public {
+    _mint(msg.sender, amount);
   }
 }
