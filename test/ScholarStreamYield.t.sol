@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {ScholarStreamYield} from "../src/ScholarStreamYield.sol";
-import {MockYieldVault} from "./mocks/MockYieldVault.sol";
-import {MockToken} from "./mocks/MockToken.sol";
+import {MockYieldVault} from "../src/mocks/MockYieldVault.sol";
+import {MockToken} from "../src/mocks/MockToken.sol";
 
 contract ScholarStreamYieldTest is Test {
   ScholarStreamYield scholar;

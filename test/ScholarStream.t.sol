@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 import {ScholarStream} from "../src/ScholarStream.sol";
 import {ScholarStreamFactory} from "../src/ScholarStreamFactory.sol";
-import {MockToken} from "./mocks/MockToken.sol";
+import {MockToken} from "../src/mocks/MockToken.sol";
 
 contract StreamTest is Test {
   ScholarStreamFactory factory;
