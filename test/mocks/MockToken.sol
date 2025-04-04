@@ -22,3 +22,4 @@ contract MockToken is ERC20 {
         _mint(account, amount);
     }
 }
+
