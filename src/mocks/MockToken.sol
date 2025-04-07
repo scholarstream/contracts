@@ -19,7 +19,7 @@ contract MockToken is ERC20 {
     return decimals_;
   }
 
-  function mint(uint256 amount) public {
-    _mint(msg.sender, amount);
+  function mint(address to, uint256 amount) public {
+    _mint(to, amount);
   }
 }

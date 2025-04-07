@@ -22,7 +22,7 @@ contract StreamTest is Test {
     payee = vm.addr(2);
 
     vm.prank(payer);
-    token.mint(10_000 * 1e6);
+    token.mint(payer, 10_000 * 1e6);
   }
 
   /// @notice Executes the full flow: deposit, create a stream, simulate time passage with withdrawals,

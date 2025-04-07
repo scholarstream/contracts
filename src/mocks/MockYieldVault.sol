@@ -3,6 +3,10 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+interface IERC20Mock is IERC20 {
+  function mint(address to, uint256 amount) external;
+}
+
 contract MockYieldVault {
   IERC20 public token;
   uint256 public totalUnderlying;
@@ -44,8 +48,9 @@ contract MockYieldVault {
     return (totalUnderlying * SCALE) / totalShares;
   }
 
-  /// @notice Simulates yield accrual by increasing the vault’s underlying assets.
-  function simulateYield(uint256 extraAmount) external {
-    totalUnderlying += extraAmount;
+  // helper for tests: simulate yield by minting tokens
+  function simulateYield(uint256 amount) external {
+    totalUnderlying += amount;
+    IERC20Mock(address(token)).mint(address(this), amount);
   }
 }

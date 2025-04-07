@@ -26,7 +26,7 @@ contract ScholarStreamYieldTest is Test {
 
     // Mint tokens to payer
     vm.prank(payer);
-    token.mint(10_000 * 1e6);
+    token.mint(payer, 10_000 * 1e6);
 
     // Payer approves ScholarStreamYield to spend tokens
     vm.startPrank(payer);
